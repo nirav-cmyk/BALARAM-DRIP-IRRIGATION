@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="gu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balaram Drip Irrigation - GJMIS Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
+        
+        sidebar { width: 260px; background-color: #1b5e20; color: white; display: flex; flex-direction: column; box-shadow: 2px 0 5px rgba(0,0,0,0.1); }
+        .sidebar-header { padding: 20px; background-color: #0f3812; text-align: center; }
+        .sidebar-header h2 { margin: 0; font-size: 18px; color: #fff; }
+        .sidebar-menu { list-style: none; padding: 0; margin: 0; flex-grow: 1; overflow-y: auto; }
+        .sidebar-menu li { padding: 12px 20px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 12px; transition: 0.2s; }
+        .sidebar-menu li:hover, .sidebar-menu li.active { background-color: #2e7d32; font-weight: bold; }
+
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        header { background-color: #2e7d32; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        header h1 { margin: 0; font-size: 20px; }
+        
+        .container { padding: 20px; max-width: 100%; box-sizing: border-box; }
+        
+        .stats-box { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .card { background: white; padding: 12px; border-radius: 6px; flex: 1; min-width: 130px; text-align: center; border-left: 5px solid #2e7d32; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
+        .card h3 { margin: 0; color: #2e7d32; font-size: 18px; }
+        .card p { margin: 5px 0 0; color: #555; font-size: 11px; font-weight: bold; }
+        
+        .panel { background: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .panel h3 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+        
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        label { margin-bottom: 5px; font-weight: bold; color: #444; font-size: 13px; }
+        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        button { background-color: #2e7d32; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-size: 15px; width: 100%; margin-top: 10px; }
+        button:hover { background-color: #1b5e20; }
+        
+        table { width: 100%; margin-top: 15px; border-collapse: collapse; background: white; }
+        th, td { border: 1px solid #ddd; padding: 9px; text-align: center; font-size: 12px; }
+        th { background-color: #2e7d32; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .section-view { display: none; }
+        .section-view.active { display: block; }
+        
+        .btn-edit { background-color: #2980b9; color: white; padding: 4px 8px; font-size: 11px; border: none; border-radius: 3px; cursor: pointer; margin-right: 3px; width: auto; }
+        .btn-transfer { background-color: #f39c12; color: white; padding: 4px 8px; font-size: 11px; border: none; border-radius: 3px; cursor: pointer; margin-right: 3px; width: auto; }
+        .btn-delete { background-color: #c62828; color: white; padding: 4px 8px; font-size: 11px; border: none; border-radius: 3px; cursor: pointer; width: auto; }
+        
+        .total-badge { background-color: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 4px; font-size: 13px; border: 1px solid #c8e6c9; }
+    </style>
+</head>
+<body>
+
+    <sidebar>
+        <div class="sidebar-header">
+            <h2>Balaram Drip</h2>
+            <p style="margin:5px 0 0; font-size:12px; color:#c8e6c9;">Surendranagar</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li id="menu-dashboard" class="active" onclick="switchTab('dashboard')">🏠 Dashboard</li>
+            <li id="menu-entry" onclick="switchTab('entry')">➕ New Entry</li>
+            <li id="menu-doc" onclick="switchTab('doc')">📄 Document Pending</li>
+            <li id="menu-workorder" onclick="switchTab('workorder')">📝 Work Order Pending</li>
+            <li id="menu-intimation" onclick="switchTab('intimation')">📋 Intimation Pending</li>
+            <li id="menu-trial" onclick="switchTab('trial')">⚙️ Trial Run Pending</li>
+            <li id="menu-crnote" onclick="switchTab('crnote')">📑 CR Note Register</li>
+        </ul>
+    </sidebar>
+
+    <div class="main-content">
+        <header>
+            <h1 id="formHeaderTitle">GJMIS / GGRC Portal Management</h1>
+            <span style="font-size: 14px;">Surendranagar Unit</span>
+        </header>
+
+        <div class="container">
+            
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="section-view active">
+                <div class="stats-box">
+                    <div class="card" onclick="switchTab('doc')">
+                        <h3 id="cDoc">0</h3>
+                        <p>Document Pending</p>
+                    </div>
+                    <div class="card" onclick="switchTab('workorder')">
+                        <h3 id="cWorkOrder">0</h3>
+                        <p>Work Order Pending</p>
+                    </div>
+                    <div class="card" onclick="switchTab('intimation')">
+                        <h3 id="cIntimation">0</h3>
+                        <p>Intimation Pending</p>
+                    </div>
+                    <div class="card" onclick="switchTab('trial')">
+                        <h3 id="cTrial">0</h3>
+                        <p>Trial Run Pending</p>
+                    </div>
+                    <div class="card" onclick="switchTab('crnote')">
+                        <h3 id="cCrNote">0</h3>
+                        <p>CR Note Register</p>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <h3>All Records <span id="dashTotal" class="total-badge">Total: 0 | Land: 0</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kram</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Village</th>
+                                <th>Mobile</th>
+                                <th>Land Size</th>
+                                <th>TP Name</th>
+                                <th>TR Date</th>
+                                <th>System</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- New/Edit Entry View -->
+            <div id="view-entry" class="section-view">
+                <div class="panel">
+                    <h3 id="panelTitle">New Farmer Registration & Entry</h3>
+                    <input type="hidden" id="editIndex" value="-1">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Registration No:</label>
+                            <input type="text" id="regNo" placeholder="Registration No lakho">
+                        </div>
+                        <div class="form-group">
+                            <label>Farmer Name:</label>
+                            <input type="text" id="farmerName" placeholder="Naam lakho">
+                        </div>
+                        <div class="form-group">
+                            <label>Village:</label>
+                            <input type="text" id="village" placeholder="Gam nu naam">
+                        </div>
+                        <div class="form-group">
+                            <label>Mobile Number:</label>
+                            <input type="text" id="mobile" placeholder="Mobile number">
+                        </div>
+                        <div class="form-group">
+                            <label>Land Size (Acre / Bigha):</label>
+                            <input type="number" step="any" id="landSize" placeholder="Land size (e.g. 2.5)">
+                        </div>
+                        <div class="form-group">
+                            <label>TP Name (ટીપી નામ):</label>
+                            <input type="text" id="tpName" placeholder="TP Name lakho">
+                        </div>
+                        <div class="form-group">
+                            <label>TR Date (ટ્રાયલ રન તારીખ):</label>
+                            <input type="date" id="trDate">
+                        </div>
+                        <div class="form-group">
+                            <label>System Type:</label>
+                            <select id="systemType">
+                                <option value="Drip Irrigation">Drip Irrigation</option>
+                                <option value="Sprinkler">Sprinkler</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Material Amount (₹):</label>
+                            <input type="number" id="matAmount" placeholder="Material amount lakho" oninput="calculateCrAmount()">
+                        </div>
+                        <div class="form-group">
+                            <label>CR Percentage (%):</label>
+                            <input type="number" id="crPercentage" placeholder="Percentage (%) lakho" value="0" oninput="calculateCrAmount()">
+                        </div>
+                        <div class="form-group">
+                            <label>Calculated CR Amount (₹):</label>
+                            <input type="text" id="crAmount" readonly style="background-color: #e9ecef; font-weight: bold; color: #2e7d32;" placeholder="Auto calculated">
+                        </div>
+                        <div class="form-group">
+                            <label>Portal Register Status:</label>
+                            <select id="statusType">
+                                <option value="Document Pending">Document Pending</option>
+                                <option value="Work Order Pending">Work Order Pending</option>
+                                <option value="Intimation Pending">Intimation Pending</option>
+                                <option value="Trial Run Pending">Trial Run Pending</option>
+                                <option value="CR Note Register">CR Note Register</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="button" id="saveBtn" onclick="saveRecord()">Save Record</button>
+                </div>
+            </div>
+
+            <!-- Document Pending View -->
+            <div id="view-doc" class="section-view">
+                <div class="panel">
+                    <h3>Document Pending Register <span id="docTotal" class="total-badge">Total: 0 | Land: 0</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kram</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Village</th>
+                                <th>Mobile</th>
+                                <th>Land Size</th>
+                                <th>System</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="docTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Work Order Pending View -->
+            <div id="view-workorder" class="section-view">
+                <div class="panel">
+                    <h3>Work Order Pending Register <span id="workOrderTotal" class="total-badge">Total: 0 | Land: 0</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kram</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Village</th>
+                                <th>Mobile</th>
+                                <th>Land Size</th>
+                                <th>System</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="workOrderTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Intimation Pending View -->
+            <div id="view-intimation" class="section-view">
+                <div class="panel">
+                    <h3>Intimation Pending Register <span id="intimationTotal" class="total-badge">Total: 0 | Land: 0</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kram</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Village</th>
+                                <th>Mobile</th>
+                                <th>Land Size</th>
+                                <th>System</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="intimationTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Trial Run Pending View -->
+            <div id="view-trial" class="section-view">
+                <div class="panel">
+                    <h3>Trial Run Pending Register <span id="trialTotal" class="total-badge">Total: 0 | Land: 0</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kram</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Village</th>
+                                <th>Mobile</th>
+                                <th>Land Size</th>
+                                <th>TP Name</th>
+                                <th>TR Date</th>
+                                <th>System</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trialTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CR Note Register View -->
+            <div id="view-crnote" class="section-view">
+                <div class="panel">
+                    <h3>CR Note Register <span id="crNoteTotalAmt" class="total-badge">Total CR Amount: ₹ 0</span></h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Kram</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Village</th>
+                                <th>Mobile</th>
+                                <th>Land Size</th>
+                                <th>Material Amt (₹)</th>
+                                <th>CR %</th>
+                                <th>CR Amount (₹)</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="crNoteTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        loadAllData();
+    });
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+        let menuEl = document.getElementById('menu-' + tabId);
+        if(menuEl) menuEl.classList.add('active');
+
+        document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+        let viewEl = document.getElementById('view-' + tabId);
+        if(viewEl) viewEl.classList.add('active');
+
+        if(tabId === 'entry') {
+            resetForm();
+        }
+
+        loadAllData();
+    }
+
+    function calculateCrAmount() {
+        let matAmt = parseFloat(document.getElementById('matAmount').value) || 0;
+        let percentage = parseFloat(document.getElementById('crPercentage').value) || 0;
+        let calculated = (matAmt * percentage) / 100;
+        document.getElementById('crAmount').value = calculated.toFixed(2);
+    }
+
+    function resetForm() {
+        document.getElementById('editIndex').value = '-1';
+        document.getElementById('panelTitle').innerText = 'New Farmer Registration & Entry';
+        document.getElementById('saveBtn').innerText = 'Save Record';
+        document.getElementById('regNo').value = '';
+        document.getElementById('farmerName').value = '';
+        document.getElementById('village').value = '';
+        document.getElementById('mobile').value = '';
+        document.getElementById('landSize').value = '';
+        document.getElementById('tpName').value = '';
+        document.getElementById('trDate').value = '';
+        document.getElementById('matAmount').value = '';
+        document.getElementById('crPercentage').value = '0';
+        document.getElementById('crAmount').value = '';
+        document.getElementById('statusType').value = 'Document Pending';
+    }
+
+    function saveRecord() {
+        const editIndex = parseInt(document.getElementById('editIndex').value);
+        const regNo = document.getElementById('regNo').value.trim();
+        const name = document.getElementById('farmerName').value.trim();
+        const village = document.getElementById('village').value.trim();
+        const mobile = document.getElementById('mobile').value.trim();
+        const landSize = document.getElementById('landSize').value.trim();
+        const tpName = document.getElementById('tpName').value.trim();
+        const trDate = document.getElementById('trDate').value;
+        const system = document.getElementById('systemType').value;
+        const matAmount = document.getElementById('matAmount').value || '0';
+        const crPercentage = document.getElementById('crPercentage').value || '0';
+        const crAmount = document.getElementById('crAmount').value || '0';
+        const status = document.getElementById('statusType').value;
+
+        if(!regNo || !name) {
+            alert("Kripa karine Registration No ane Farmer Name lakho!");
+            return;
+        }
+
+        const record = { regNo, name, village, mobile, landSize, tpName, trDate, system, matAmount, crPercentage, crAmount, status };
+        
+        let records = JSON.parse(localStorage.getItem('gjmis_land_total_records')) || [];
+
+        if(editIndex === -1) {
+            records.push(record);
+            alert("Record safaltapurvak save thai gyo chhe!");
+        } else {
+            records[editIndex] = record;
+            alert("Record ma safaltapurvak sudharo thai gyo chhe!");
+        }
+
+        localStorage.setItem('gjmis_land_total_records', JSON.stringify(records));
+        switchTab('dashboard');
+    }
+
+    function editRecord(index) {
+        let records = JSON.parse(localStorage.getItem('gjmis_land_total_records')) || [];
+        let r = records[index];
+
+        document.getElementById('editIndex').value = index;
+        document.getElementById('panelTitle').innerText = 'Edit Farmer Record (sudharo karo)';
+        document.getElementById('saveBtn').innerText = 'Update Record';
+
+        document.getElementById('regNo').value = r.regNo || '';
+        document.getElementById('farmerName').value = r.name || '';
+        document.getElementById('village').value = r.village || '';
+        document.getElementById('mobile').value = r.mobile || '';
+        document.getElementById('landSize').value = r.landSize || '';
+        document.getElementById('tpName').value = r.tpName || '';
+        document.getElementById('trDate').value = r.trDate || '';
+        document.getElementById('systemType').value = r.system || 'Drip Irrigation';
+        document.getElementById('matAmount').value = r.matAmount || '';
+        document.getElementById('crPercentage').value = r.crPercentage || '0';
+        document.getElementById('crAmount').value = r.crAmount || '';
+        document.getElementById('statusType').value = r.status || 'Document Pending';
+
+        document.querySelectorAll('.sidebar-menu li').forEach(li => li.classList.remove('active'));
+        document.getElementById('menu-entry').classList.add('active');
+        document.querySelectorAll('.section-view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-entry').classList.add('active');
+    }
+
+    function loadAllData() {
+        let records = JSON.parse(localStorage.getItem('gjmis_land_total_records')) || [];
+
+        let docList = [];
+        let workOrderList = [];
+        let intimationList = [];
+        let trialList = [];
+        let crNoteList = [];
+
+        records.forEach((r, index) => {
+            r.originalIndex = index;
+            if(r.status === "Document Pending") docList.push(r);
+            else if(r.status === "Work Order Pending") workOrderList.push(r);
+            else if(r.status === "Intimation Pending") intimationList.push(r);
+            else if(r.status === "Trial Run Pending") trialList.push(r);
+            else if(r.status === "CR Note Register") crNoteList.push(r);
+        });
+
+        document.getElementById('cDoc').innerText = docList.length;
+        document.getElementById('cWorkOrder').innerText = workOrderList.length;
+        document.getElementById('cIntimation').innerText = intimationList.length;
+        document.getElementById('cTrial').innerText = trialList.length;
+        document.getElementById('cCrNote').innerText = crNoteList.length;
+
+        // Calculate Total Land for lists
+        let calcLand = (list) => {
+            let total = 0;
+            list.forEach(r => { total += parseFloat(r.landSize) || 0; });
+            return total.toFixed(2);
+        };
+
+        document.getElementById('dashTotal').innerText = `Total: ${records.length} | Land: ${calcLand(records)}`;
+        document.getElementById('docTotal').innerText = `Total: ${docList.length} | Land: ${calcLand(docList)}`;
+        document.getElementById('workOrderTotal').innerText = `Total: ${workOrderList.length} | Land: ${calcLand(workOrderList)}`;
+        document.getElementById('intimationTotal').innerText = `Total: ${intimationList.length} | Land: ${calcLand(intimationList)}`;
+        document.getElementById('trialTotal').innerText = `Total: ${trialList.length} | Land: ${calcLand(trialList)}`;
+
+        // CR Note Total Amount calculation
+        let totalCrAmt = 0;
+        crNoteList.forEach(r => {
+            totalCrAmt += parseFloat(r.crAmount) || 0;
+        });
+        document.getElementById('crNoteTotalAmt').innerText = `Total CR Amount: ₹ ${totalCrAmt.toFixed(2)}`;
+
+        // Dashboard Table
+        let dashHtml = '';
+        if(records.length === 0) {
+            dashHtml = `<tr><td colspan="11" style="color:#777;">Koi record uplabdh nathi</td></tr>`;
+        } else {
+            records.forEach((r, i) => {
+                dashHtml += `<tr>
+                    <td>${i+1}</td>
+                    <td><b>${r.regNo}</b></td>
+                    <td>${r.name}</td>
+                    <td>${r.village}</td>
+                    <td>${r.mobile}</td>
+                    <td>${r.landSize || '-'}</td>
+                    <td>${r.tpName || '-'}</td>
+                    <td>${r.trDate || '-'}</td>
+                    <td>${r.system}</td>
+                    <td><b style="color:#c62828;">${r.status}</b></td>
+                    <td>
+                        <button class="btn-edit" onclick="editRecord(${r.originalIndex})">✏️ Edit</button>
+                        <button class="btn-transfer" onclick="openTransferModal(${r.originalIndex})">🔄 Transfer</button>
+                        <button class="btn-delete" onclick="deleteRecord(${r.originalIndex})">Delete</button>
+                    </td>
+                </tr>`;
+            });
+        }
+        document.getElementById('dashTableBody').innerHTML = dashHtml;
+
+        renderStandardTable('docTableBody', docList);
+        renderStandardTable('workOrderTableBody', workOrderList);
+        renderStandardTable('intimationTableBody', intimationList);
+        renderTrialTable('trialTableBody', trialList);
+        renderCrNoteTable('crNoteTableBody', crNoteList);
+    }
+
+    function renderStandardTable(elementId, list) {
+        let html = '';
+        if(list.length === 0) {
+            html = `<tr><td colspan="8" style="color:#777;">Koi pending record nathi</td></tr>`;
+        } else {
+            list.forEach((r, i) => {
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td><b>${r.regNo}</b></td>
+                    <td>${r.name}</td>
+                    <td>${r.village}</td>
+                    <td>${r.mobile}</td>
+                    <td>${r.landSize || '-'}</td>
+                    <td>${r.system}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editRecord(${r.originalIndex})">✏️ Edit</button>
+                        <button class="btn-transfer" onclick="openTransferModal(${r.originalIndex})">🔄 Transfer</button>
+                        <button class="btn-delete" onclick="deleteRecord(${r.originalIndex})">Delete</button>
+                    </td>
+                </tr>`;
+            });
+        }
+        document.getElementById(elementId).innerHTML = html;
+    }
+
+    function renderTrialTable(elementId, list) {
+        let html = '';
+        if(list.length === 0) {
+            html = `<tr><td colspan="10" style="color:#777;">Koi pending record nathi</td></tr>`;
+        } else {
+            list.forEach((r, i) => {
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td><b>${r.regNo}</b></td>
+                    <td>${r.name}</td>
+                    <td>${r.village}</td>
+                    <td>${r.mobile}</td>
+                    <td>${r.landSize || '-'}</td>
+                    <td><b>${r.tpName || '-'}</b></td>
+                    <td>${r.trDate || '-'}</td>
+                    <td>${r.system}</td>
+                    <td>
+                        <button class="btn-edit" onclick="editRecord(${r.originalIndex})">✏️ Edit</button>
+                        <button class="btn-transfer" onclick="openTransferModal(${r.originalIndex})">🔄 Transfer</button>
+                        <button class="btn-delete" onclick="deleteRecord(${r.originalIndex})">Delete</button>
+                    </td>
+                </tr>`;
+            });
+        }
+        document.getElementById(elementId).innerHTML = html;
+    }
+
+    function renderCrNoteTable(elementId, list) {
+        let html = '';
+        if(list.length === 0) {
+            html = `<tr><td colspan="10" style="color:#777;">Koi CR Note record nathi</td></tr>`;
+        } else {
+            list.forEach((r, i) => {
+                html += `<tr>
+                    <td>${i+1}</td>
+                    <td><b>${r.regNo}</b></td>
+                    <td>${r.name}</td>
+                    <td>${r.village}</td>
+                    <td>${r.mobile}</td>
+                    <td>${r.landSize || '-'}</td>
+                    <td>₹ ${r.matAmount || 0}</td>
+                    <td>${r.crPercentage || 0}%</td>
+                    <td><b>₹ ${r.crAmount || 0}</b></td>
+                    <td>
+                        <button class="btn-edit" onclick="editRecord(${r.originalIndex})">✏️ Edit</button>
+                        <button class="btn-transfer" onclick="openTransferModal(${r.originalIndex})">🔄 Transfer</button>
+                        <button class="btn-delete" onclick="deleteRecord(${r.originalIndex})">Delete</button>
+                    </td>
+                </tr>`;
+            });
+        }
+        document.getElementById(elementId).innerHTML = html;
+    }
+
+    function openTransferModal(index) {
+        let records = JSON.parse(localStorage.getItem('gjmis_land_total_records')) || [];
+        let r = records[index];
+
+        let newStatus = prompt(`Farmer: ${r.name} (Reg No: ${r.regNo})\nCurrent Status: ${r.status}\n\nKya register ma transfer karvu chhe?\n1. Document Pending\n2. Work Order Pending\n3. Intimation Pending\n4. Trial Run Pending\n5. CR Note Register\n\n(Nam athva number lakho):`, "Document Pending");
+
+        if(newStatus) {
+            if(newStatus.includes("1") || newStatus.toLowerCase().includes("doc")) {
+                r.status = "Document Pending";
+            } else if(newStatus.includes("2") || newStatus.toLowerCase().includes("work")) {
+                r.status = "Work Order Pending";
+            } else if(newStatus.includes("3") || newStatus.toLowerCase().includes("intimation")) {
+                r.status = "Intimation Pending";
+            } else if(newStatus.includes("4") || newStatus.toLowerCase().includes("trial")) {
+                r.status = "Trial Run Pending";
+            } else if(newStatus.includes("5") || newStatus.toLowerCase().includes("cr")) {
+                r.status = "CR Note Register";
+            } else {
+                r.status = newStatus;
+            }
+
+            records[index] = r;
+            localStorage.setItem('gjmis_land_total_records', JSON.stringify(records));
+            loadAllData();
+            alert("Record safaltapurvak transfer thai gyo chhe!");
+        }
+    }
+
+    function deleteRecord(index) {
+        if(confirm("Su tame aa record delete karva mango chho?")) {
+            let records = JSON.parse(localStorage.getItem('gjmis_land_total_records')) || [];
+            records.splice(index, 1);
+            localStorage.setItem('gjmis_land_total_records', JSON.stringify(records));
+            loadAllData();
+        }
+    }
+</script>
+
+</body>
+</html>
